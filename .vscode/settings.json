@@ -1,0 +1,8 @@
+{
+	"github.copilot.chat.commitMessageGeneration.instructions": [
+
+		{
+			"file": "doc/84_specification_commit_message.md"
+		}
+	]
+}
