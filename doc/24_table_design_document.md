@@ -22,7 +22,8 @@
 - `id` (PK)
 - `stateListId` (FK: stateLists.id)
 - `name`
-- `parentId` (nullable, FK: states.id) — 階層状態
+- `parentId` (nullable, FK: states.id) — 階層状態（最大階層深さ: 5）
+- `depth` (number) — 階層深さ（ルート=0、最大5）
 - `meta` (JSON)
 
 ### eventLists
@@ -68,8 +69,9 @@
 ### diagramEdges
 - `id` (PK)
 - `diagramId` (FK: diagrams.id)
-- `sourceId` (FK: states.id)
-- `targetId` (FK: states.id)
+- `sourceNodeId` (FK: diagramNodes.id) — ダイアグラム上のノード配置を参照
+- `targetNodeId` (FK: diagramNodes.id) — ダイアグラム上のノード配置を参照
+- `eventId` (nullable, FK: events.id) — エッジに対応するイベント
 - `label`
 
 ### variables
@@ -102,8 +104,9 @@
 ### panels
 - `id` (PK)
 - `projectId` (FK: projects.id)
-- `transitionId` (FK: transitionTables.id)
-- `view` ("table"|"diagram")
+- `contentType` ("transitionTable"|"diagram") — パネルに表示するコンテンツ種別
+- `contentId` (string) — transitionTables.id または diagrams.id を参照
+- `view` ("table"|"diagram") — 表示ビュー（contentType=transitionTableの場合のみ切替可能）
 - `zoom` (number)
 - `layout` (JSON: x,y,width,height, snapped)
 
@@ -112,7 +115,17 @@
 - `autoSaveIntervalSec` (number)
 - `language` (string)
 - `llmEnabled` (bool)
+- `llmTimeoutSec` (number)
+- `debugMode` (bool)
+- `snapshotGenerations` (number)
 - `lastExplorerSide` ("left"|"right")
+
+### snapshots
+- `id` (PK)
+- `projectId` (FK: projects.id)
+- `timestamp` (ISO8601 string)
+- `data` (JSON) — プロジェクト全データのシリアライズ
+- `description` (string) — 例: "自動保存 2025-12-09 14:30:15"
 
 ## 3. インデックス設計（Dexie stores 例）
 - projects: `id, name`
@@ -124,17 +137,22 @@
 - transitionCells: `id, tableId, stateId, eventId`
 - diagrams: `id, projectId`
 - diagramNodes: `id, diagramId, stateId`
-- diagramEdges: `id, diagramId, sourceId, targetId`
+- diagramEdges: `id, diagramId, sourceNodeId, targetNodeId, eventId`
 - variables: `id, projectId, name`
 - constants: `id, projectId, name`
 - templates: `id, projectId, type`
 - simulations: `id, projectId`
-- panels: `id, projectId`
+- panels: `id, projectId, contentType, contentId`
 - settings: `projectId`
+- snapshots: `id, projectId, timestamp`
 
 ## 4. 整合性・制約（アプリ層）
 - state/event/transition/diagram は同一 `projectId` に属することを保存前に検証。
 - `nextStateId` は `stateListId` 内の state に限定する。
+- 階層状態: `states.depth` が 5 を超える場合はエラー。保存時に `parentId` を辿り無限ループをチェック。
+- `diagramEdges`: `sourceNodeId`/`targetNodeId` は同一 `diagramId` 内の `diagramNodes` に存在することを検証。
+- `panels`: `contentId` が `contentType` に対応するテーブル（transitionTables または diagrams）に存在することを検証。
+- `snapshots`: プロジェクトごとに最新 N 世代を保持(N は `settings.snapshotGenerations`)。古い世代は自動削除(timestamp 昇順で削除)。
 - 削除時は参照先がないことを確認し、必要に応じてカスケード削除を実装。
 - `logsJson` は step 数が多くなるため、必要に応じて圧縮（LZ4 等）を将来検討。
 
