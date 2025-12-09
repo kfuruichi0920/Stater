@@ -1,0 +1,47 @@
+/**
+ * Global Styles
+ * グローバルスタイル定義
+ */
+
+/* リセットCSS */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ルート要素 */
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  /* カラーパレット(後でテーマ設計に基づき拡張) */
+  --color-bg: #1e1e1e;
+  --color-fg: #d4d4d4;
+  --color-primary: #007acc;
+  --color-secondary: #3794ff;
+  --color-border: #3e3e3e;
+
+  /* フォントサイズ */
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+}
